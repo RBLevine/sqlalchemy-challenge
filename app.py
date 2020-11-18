@@ -69,6 +69,25 @@ def precipitation():
 
     return jsonify(PrecipDataDict)
 
+@app.route("/api/v1.0/stations")
+def stations():
+    """Return JSON list of alll the stations in the dataset."""
+
+    # Get the informatino for all stations
+    stations = session.query(Station.station, Station.name, Station.elevation)
+
+    # Convert stations into to dictionary
+    stationDict = []
+    for station, name, elevation in stations:
+        station_dict = {}
+        station_dict["elevation"] = elevation
+        station_dict["name"] = name
+        station_dict["station"] = station
+        stationDict.append(station_dict)
+    
+    return jsonify(stationDict)
+    
+
 
 if __name__ == '__main__':
     app.run(debug=True)
