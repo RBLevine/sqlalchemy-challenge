@@ -48,9 +48,9 @@ def welcome():
         f"Temp observations from the last year:<br/>"
         f"/api/v1.0/tobs<br/>"
         f"Min temp, average temp, and max temp for a given start date:<br/>"
-        f"/api/v1.0/start<br/>"
+        f"/api/v1.0/<start><br/>"
         f"Min temp, average temp, and max temp for a given date range:<br/>"
-        f"/api/v1.0/start/end"
+        f"/api/v1.0/<start>/<end>"
     )
 
 @app.route("/api/v1.0/precipitation")
@@ -108,6 +108,34 @@ def tobs():
 
     return jsonify(mostActiveDict)
 
+@app.route("/api/v1.0/<start>")
+@app.route("/api/v1.0/<start>/<end>")
+def date(start = None, end = None):
+    """Return min temp, average temp, and max temp given a start date or date range."""
+
+    # Get date and precipitation
+    # If there is only a start date
+    if end == None:
+        minTemp = session.query(func.min(Measurement.tobs)).filter(Measurement.date >= start).scalar()
+        maxTemp = session.query(func.max(Measurement.tobs)).filter(Measurement.date >= start).scalar()
+        avgTemp = session.query(func.avg(Measurement.tobs)).filter(Measurement.date >= start).scalar()
+    
+    # If there is a date range given
+    else:
+        minTemp = session.query(func.min(Measurement.tobs)).filter(Measurement.date >= start).filter(Measurement.date <= end).scalar()
+        maxTemp = session.query(func.max(Measurement.tobs)).filter(Measurement.date >= start).filter(Measurement.date <= end).scalar()
+        avgTemp = session.query(func.avg(Measurement.tobs)).filter(Measurement.date >= start).filter(Measurement.date <= end).scalar()
+    
+    weatherDict = {}
+    weatherDict["start_date"] = start
+    weatherDict["end_date"] = end
+    weatherDict["min_temp"] = minTemp
+    weatherDict["max_temp"] = maxTemp
+    weatherDict["avg_temp"] = avgTemp
+    
+    return jsonify(weatherDict)
+
+session.close()
 
 if __name__ == '__main__':
     app.run(debug=True)
