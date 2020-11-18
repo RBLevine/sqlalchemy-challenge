@@ -8,8 +8,6 @@ from sqlalchemy import create_engine, func
 from flask import Flask, jsonify
 
 import datetime as dt
-from dateutil.relativedelta import relativedelta
-
 
 #################################################
 # Database Setup
@@ -24,6 +22,9 @@ Base.prepare(engine, reflect=True)
 # Save reference to the table
 Measurement = Base.classes.measurement
 Station = Base.classes.station
+
+# Create session
+session=Session(engine)
 
 #################################################
 # Flask Setup
@@ -51,3 +52,23 @@ def welcome():
         f"Min temp, average temp, and max temp for a given date range:<br/>"
         f"/api/v1.0/start/end"
     )
+
+@app.route("/api/v1.0/precipitation")
+def precipitation():
+    """Query to retrieve precipitation data for 12 months since the last data point."""
+
+    #Find the date of the last data point
+    lastDataPoint = session.query(Measurement.date).order_by(Measurement.date.desc()).first()
+    # Get the date of one year from the last data point
+    oneYearBefore = dt.date(2017,8,23) - dt.timedelta(days=365)
+    # Get the precipitation data
+    PrecipData=session.query(Measurement.date, Measurement.prcp).filter(Measurement.date >= oneYearBefore).all()
+
+    # Convert PrecipData to dictionary where date is the key and the prcp is the value
+    PrecipDataDict = {date: prcp for date, prcp in PrecipData}
+
+    return jsonify(PrecipDataDict)
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
