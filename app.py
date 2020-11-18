@@ -47,10 +47,11 @@ def welcome():
         f"/api/v1.0/stations<br/>"
         f"Temp observations from the last year:<br/>"
         f"/api/v1.0/tobs<br/>"
+        f"For start and end dates, the YYYY-MM-DD format must be used:<br/>"
         f"Min temp, average temp, and max temp for a given start date:<br/>"
-        f"/api/v1.0/<start><br/>"
+        f"/api/v1.0/start<br/>"
         f"Min temp, average temp, and max temp for a given date range:<br/>"
-        f"/api/v1.0/<start>/<end>"
+        f"/api/v1.0/start/end"
     )
 
 @app.route("/api/v1.0/precipitation")
@@ -133,7 +134,12 @@ def date(start = None, end = None):
     weatherDict["max_temp"] = maxTemp
     weatherDict["avg_temp"] = avgTemp
     
-    return jsonify(weatherDict)
+    # Make sure information was available or return error message
+    if minTemp == None or maxTemp == None or avgTemp == None:
+        return "No temp data found for the date or range, please try a different date/range."
+    
+    else:
+        return jsonify(weatherDict)
 
 session.close()
 
