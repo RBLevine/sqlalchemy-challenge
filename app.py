@@ -86,7 +86,27 @@ def stations():
         stationDict.append(station_dict)
     
     return jsonify(stationDict)
-    
+
+@app.route("/api/v1.0/tobs")
+def tobs():
+    """Return dates and temp observations for 12 months from the most recent data point"""
+   
+    #Find the date of the last data point
+    lastDataPoint = session.query(Measurement.date).order_by(Measurement.date.desc()).first()
+    # Get the date of one year from the last data point
+    oneYearBefore = dt.date(2017,8,23) - dt.timedelta(days=365)
+ 
+    # Get the most active station - the station with the most data points
+    stationCounts=session.query(Measurement.station, func.count(Measurement.station)).group_by(Measurement.station).order_by(func.count(Measurement.station).desc()).all()
+    mostActiveID=stationCounts[0][0]
+
+    # Get data and temp results for most active station
+    mostActiveData = session.query(Measurement.date, Measurement.tobs).filter(Measurement.station == mostActiveID).filter(Measurement.date >=oneYearBefore).all()
+
+    # Convert mostActiveData to dictionary where date is key and tobs in value
+    mostActiveDict = {date: tobs for date, tobs in mostActiveData}
+
+    return jsonify(mostActiveDict)
 
 
 if __name__ == '__main__':
